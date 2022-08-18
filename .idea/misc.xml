@@ -4,7 +4,9 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Android_F/AsyncTaskExample/app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="..\:/Android_F/AsyncTaskExample/app/src/main/res/layout/fragment_helper.xml" value="0.25416666666666665" />
         <entry key="..\:/Android_F/AsyncTaskExample/app/src/main/res/layout/fragment_result_all_tasks.xml" value="0.1" />
+        <entry key="..\:/Android_F/AsyncTaskExample/app/src/main/res/layout/fragment_tasks.xml" value="0.25416666666666665" />
       </map>
     </option>
   </component>

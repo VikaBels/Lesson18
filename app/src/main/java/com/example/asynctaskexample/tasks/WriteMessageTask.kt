@@ -1,26 +1,30 @@
 package com.example.asynctaskexample.tasks
 
+import android.content.Intent
 import android.os.AsyncTask
-import com.example.asynctaskexample.databinding.FragmentResultAllTasksBinding
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.example.asynctaskexample.activities.MainActivity.Companion.BROADCAST_ACTION_SEND_TEXT
+import com.example.asynctaskexample.activities.MainActivity.Companion.EXTRA_RESULT_TEXT
+import com.example.asynctaskexample.models.App.Companion.getInstanceApp
 
-class WriteMessageTask(
-    private val bindingFragment: FragmentResultAllTasksBinding?,
-) : AsyncTask<Void?, String?, Void?>() {
+class WriteMessageTask : AsyncTask<Void?, String?, Void?>() {
 
     private val listMessage = ArrayList<String>()
 
+    private fun sendMessage(value: String) {
+        val intent = Intent(BROADCAST_ACTION_SEND_TEXT)
+        intent.putExtra(EXTRA_RESULT_TEXT, value)
+        LocalBroadcastManager.getInstance(getInstanceApp()).sendBroadcastSync(intent)
+    }
+
     override fun onProgressUpdate(vararg values: String?) {
         super.onProgressUpdate(*values)
-        bindingFragment?.container?.text = values[0]
+        sendMessage(values.joinToString())
     }
 
     override fun doInBackground(vararg p0: Void?): Void? {
         try {
-            if (isCancelled) {
-                return null
-            }
-
-            while (true) {
+            while (!isCancelled) {
                 writeMessage()
                 sleepThread(100)
             }
@@ -30,22 +34,8 @@ class WriteMessageTask(
         return null
     }
 
-//    override fun onPostExecute(result: Void?) {
-//        super.onPostExecute(result)
-//        LocalBroadcastManager
-//            .getInstance(App.getInstance())
-//            .sendBroadcast(Intent(BROADCAST_ACTION)
-//                .putExtra(EXTRA_RESULT, "DONE")
-//        )
-//
-//        if(getContext()!=null){
-//            println("setResultText('Done')")
-//        }
-//    }
-
     private fun writeMessage() {
         val stringListMessage: String
-        val finalText = StringBuilder()
 
         synchronized(this) {
             stringListMessage = listMessage.joinToString(
@@ -55,12 +45,7 @@ class WriteMessageTask(
             listMessage.clear()
         }
 
-        finalText.apply {
-            append(bindingFragment?.container?.text)
-            append(stringListMessage)
-        }
-
-        publishProgress(finalText.toString())
+        publishProgress(stringListMessage)
     }
 
     private fun sleepThread(millis: Long) {

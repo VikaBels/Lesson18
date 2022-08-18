@@ -1,7 +1,6 @@
 package com.example.asynctaskexample.tasks
 
 import android.os.AsyncTask
-import com.example.asynctaskexample.databinding.ActivityMainBinding
 
 class FindSimpleDigitTask(
     private val objectWriter: WriteMessageTask?,
@@ -50,8 +49,8 @@ class FindSimpleDigitTask(
     }
 
     private fun wakeUpMessageThread() {
-        val asyncTask4 = objectWriter?.let { SendCustomMessageTask(it) }
-        asyncTask4?.executeOnExecutor(
+        val asyncTaskGetString = objectWriter?.let { SendCustomMessageTask(it) }
+        asyncTaskGetString?.executeOnExecutor(
             AsyncTask.THREAD_POOL_EXECUTOR
         )
     }

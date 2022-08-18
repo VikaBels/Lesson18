@@ -1,18 +1,90 @@
 package com.example.asynctaskexample.activities
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.example.asynctaskexample.R
 import com.example.asynctaskexample.databinding.ActivityMainBinding
-
+import com.example.asynctaskexample.fragments.TasksFragment
+import com.example.asynctaskexample.models.App.Companion.getInstanceApp
 
 class MainActivity : AppCompatActivity() {
+    companion object {
+        const val TAG_TASK_FRAGMENT = "tagForHelperFragment"
+        const val EXTRA_RESULT_TEXT = "EXTRA_RESULT_TEXT"
+        const val BROADCAST_ACTION_SEND_TEXT = "WriteMessageTask.BROADCAST_ACTION_SEND_TEXT"
+
+        const val EXTRA_RESULT_BUTTON = "EXTRA_RESULT_BUTTON"
+        const val BROADCAST_ACTION_BTN_ENABLE = "CounterTask.BROADCAST_ACTION_SET_BUTTON_ENABLE"
+
+        const val TEXTVIEW_STATE_KEY = "TEXTVIEW_STATE_KEY"
+    }
+
     private var bindingMain: ActivityMainBinding? = null
+    private var taskFragment: TasksFragment? = null
+
+    private var messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent) {
+            val message = intent.getStringExtra(EXTRA_RESULT_TEXT)
+            onNewMessageReceive(message)
+        }
+    }
+
+    private var buttonReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent) {
+            val tasksInProgress = intent.getBooleanExtra(EXTRA_RESULT_BUTTON, false)
+            checkButtonReceive(tasksInProgress)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         bindingMain = ActivityMainBinding.inflate(layoutInflater)
         setContentView(bindingMain?.root)
+
+        recoveryTextRotated(savedInstanceState)
+
+        checkFragmentExist()
+
+        clickListenerBtnStart()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(TEXTVIEW_STATE_KEY, bindingMain?.container?.text.toString())
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        messageReceiver.let { messageReceiver ->
+            LocalBroadcastManager.getInstance(getInstanceApp()).registerReceiver(
+                messageReceiver,
+                IntentFilter(BROADCAST_ACTION_SEND_TEXT)
+            )
+        }
+
+        buttonReceiver.let { buttonReceiver ->
+            LocalBroadcastManager.getInstance(getInstanceApp()).registerReceiver(
+                buttonReceiver,
+                IntentFilter(BROADCAST_ACTION_BTN_ENABLE)
+            )
+        }
+    }
+
+    override fun onPause() {
+        messageReceiver.let { messageReceiver ->
+            LocalBroadcastManager.getInstance(getInstanceApp()).unregisterReceiver(messageReceiver)
+        }
+        buttonReceiver.let { buttonReceiver ->
+            LocalBroadcastManager.getInstance(getInstanceApp()).unregisterReceiver(buttonReceiver)
+        }
+        super.onPause()
     }
 
     override fun onDestroy() {
@@ -20,123 +92,75 @@ class MainActivity : AppCompatActivity() {
         bindingMain = null
     }
 
-//    override fun cancel() {
-//        asyncTask1?.cancel(false)
-//        asyncTask2?.cancel(false)
-//        asyncTask3?.cancel(false)
-//    }
-//
-//    private fun clickListenerBtnStart() {
-//        bindingMain?.buttonStart?.setOnClickListener {
-//            setBtnStartDisable()
-//            startAllAsyncTasks()
-//        }
-//    }
-//
-//    private fun setBtnStartDisable() {
-//        bindingMain?.buttonStart?.apply {
-//            isEnabled = false
-//            setTextColor(ContextCompat.getColor(context, R.color.grey))
-//            setBackgroundColor(ContextCompat.getColor(context, R.color.teal_700))
-//        }
-//    }
-//
-//    private fun startAllAsyncTasks() {
-//        asyncTask1 = WriteMessageTask(bindingMain)
-//        startAsyncTask(null, asyncTask1)
-//
-//        asyncTask2 = CounterTask(bindingMain, asyncTask1, this)
-//        startAsyncTask(asyncTask2, null)
-//
-//        asyncTask3 = FindSimpleDigitTask(asyncTask1)
-//        startAsyncTask(asyncTask3, null)
-//    }
-//
-//    private fun startAsyncTask(
-//        taskInt: AsyncTask<Void?, Int?, Void?>?,
-//        taskString: AsyncTask<Void?, String?, Void?>?
-//    ) {
-//        if (taskInt != null) {
-//            taskInt.executeOnExecutor(
-//                AsyncTask.THREAD_POOL_EXECUTOR
-//            )
-//        } else {
-//            taskString?.executeOnExecutor(
-//                AsyncTask.THREAD_POOL_EXECUTOR
-//            )
-//        }
-//    }
-}
-/*
-    <ProgressBar
-        android:id="@+id/progressBar5"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:max="100"
-        android:progress="0" />
-    <TextView
-        android:id="@+id/info_text5"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"/>
-
-  private fun startAsyncTask(
-            taskInt: AsyncTask<Void?, Int?, Void?>?,
-            taskString: AsyncTask<Void?, String?, Void?>?
-        ) {
-            if (taskInt != null) {
-                taskInt.executeOnExecutor(
-                    AsyncTask.THREAD_POOL_EXECUTOR
-                )
-            } else {
-                taskString?.executeOnExecutor(
-                    AsyncTask.THREAD_POOL_EXECUTOR
-                )
-            }
-    }
-
-asyncTask4 = SendCustomMessageTask(bindingMain, asyncTask1)
-startAsyncTask(null, asyncTask4)
-
-
-inner class MyAsyncTask5(
-    private val mProgressBar: ProgressBar?,
-    private val bindingMain: ActivityMainBinding?
-) : AsyncTask<Void?, Int?, Void?>() {
-
-    override fun onPreExecute() {
-        super.onPreExecute()
-
-        bindingMain?.infoText3?.text = "Запуск 5 потока"
-    }
-
-    override fun onProgressUpdate(vararg values: Int?) {
-        super.onProgressUpdate(*values)
-        mProgressBar?.progress = values[0]!!
-        bindingMain?.infoText5?.text = "Число: " + values[0]
-    }
-
-    override fun onPostExecute(aVoid: Void?) {
-        super.onPostExecute(aVoid)
-        bindingMain?.infoText5?.text = "Завершение 5 потока"
-    }
-
-    override fun doInBackground(vararg p0: Void?): Void? {
-        try {
-            var counter = 0
-            for (i in 0..99) {
-                sleepThread()
-                publishProgress(++counter)
-            }
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
+    private fun recoveryTextRotated(savedInstanceState: Bundle?) {
+        var previousText = ""
+        if (savedInstanceState != null && savedInstanceState.containsKey(TEXTVIEW_STATE_KEY)) {
+            previousText = savedInstanceState.getString(TEXTVIEW_STATE_KEY).toString()
         }
-        return null
+        bindingMain?.container?.text = previousText
     }
 
-    private fun sleepThread() {
-        SystemClock.sleep(100)
+    private fun onNewMessageReceive(message: String?) {
+        if (!message.isNullOrEmpty()) {
+            bindingMain?.container?.text = getText(message)
+        }
+    }
+
+    private fun checkButtonReceive(tasksInProgress: Boolean) {
+        if (tasksInProgress) {
+            setButtonEnable()
+        }
+    }
+
+    private fun getText(currentValue: String): String {
+        val finalText = StringBuilder()
+
+        finalText.apply {
+            append(bindingMain?.container?.text)
+            append(currentValue)
+        }
+
+        return finalText.toString()
+    }
+
+    private fun checkFragmentExist() {
+        taskFragment =
+            supportFragmentManager.findFragmentByTag(TAG_TASK_FRAGMENT) as TasksFragment?
+
+        if (taskFragment == null) {
+            taskFragment = TasksFragment()
+
+            supportFragmentManager
+                .beginTransaction()
+                .add(taskFragment!!, TAG_TASK_FRAGMENT)
+                .commit()
+        }
+
+        if (taskFragment?.getIsStarted() == true) {
+            setBtnStartDisable()
+        }
+    }
+
+    private fun clickListenerBtnStart() {
+        bindingMain?.buttonStart?.setOnClickListener {
+            setBtnStartDisable()
+            taskFragment?.startAllAsyncTasks()
+        }
+    }
+
+    private fun setButtonEnable() {
+        bindingMain?.buttonStart?.apply {
+            isEnabled = true
+            setTextColor(ContextCompat.getColor(context, R.color.white))
+            setBackgroundColor(ContextCompat.getColor(context, R.color.teal_200))
+        }
+    }
+
+    private fun setBtnStartDisable() {
+        bindingMain?.buttonStart?.apply {
+            isEnabled = false
+            setTextColor(ContextCompat.getColor(context, R.color.grey))
+            setBackgroundColor(ContextCompat.getColor(context, R.color.teal_700))
+        }
     }
 }
-*/

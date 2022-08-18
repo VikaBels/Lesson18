@@ -1,25 +1,20 @@
 package com.example.asynctaskexample.tasks
 
+import android.content.Intent
 import android.os.AsyncTask
-import android.os.Handler
-import android.os.Looper
-import androidx.core.content.ContextCompat
-import com.example.asynctaskexample.R
-import com.example.asynctaskexample.databinding.FragmentResultAllTasksBinding
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.example.asynctaskexample.activities.MainActivity
 import com.example.asynctaskexample.interfaces.CancelAllTasks
+import com.example.asynctaskexample.models.App
 
 class CounterTask(
-    private val bindingFragment: FragmentResultAllTasksBinding?,
     private val objectWriter: WriteMessageTask?,
     private val listenerForFragment: CancelAllTasks,
-
 ) : AsyncTask<Void?, Int?, Void?>() {
     companion object {
         const val FINAL_NUMBER = 10
         const val START_NUMBER = 1
     }
-
-    private val handler = Handler(Looper.getMainLooper())
 
     override fun doInBackground(vararg p0: Void?): Void? {
         try {
@@ -37,8 +32,6 @@ class CounterTask(
         return null
     }
 
-
-
     private fun counterOneTen(currentDigit: Int) {
         sendDigit(currentDigit)
 
@@ -47,9 +40,7 @@ class CounterTask(
 
             listenerForFragment.cancel()
 
-            handler.post {
-                setButtonEnable()
-            }
+            sendBroadcastButton()
         }
 
         sleepThread(5000)
@@ -67,11 +58,9 @@ class CounterTask(
         }
     }
 
-    private fun setButtonEnable() {
-        bindingFragment?.buttonStart?.apply {
-            isEnabled = true
-            setTextColor(ContextCompat.getColor(context, R.color.white))
-            setBackgroundColor(ContextCompat.getColor(context, R.color.teal_200))
-        }
+    private fun sendBroadcastButton() {
+        val intent = Intent(MainActivity.BROADCAST_ACTION_BTN_ENABLE)
+        intent.putExtra(MainActivity.EXTRA_RESULT_BUTTON, true)
+        LocalBroadcastManager.getInstance(App.getInstanceApp()).sendBroadcast(intent)
     }
 }

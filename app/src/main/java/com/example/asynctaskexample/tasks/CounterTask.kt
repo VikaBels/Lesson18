@@ -3,12 +3,14 @@ package com.example.asynctaskexample.tasks
 import android.content.Intent
 import android.os.AsyncTask
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.example.asynctaskexample.BROADCAST_ACTION_BTN_ENABLE
+import com.example.asynctaskexample.EXTRA_RESULT_BUTTON
 import com.example.asynctaskexample.activities.MainActivity
 import com.example.asynctaskexample.interfaces.CancelAllTasks
 import com.example.asynctaskexample.models.App
 
 class CounterTask(
-    private val objectWriter: WriteMessageTask?,
+    private val objectWriter: WriteMessageTask,
     private val listenerForFragment: CancelAllTasks,
 ) : AsyncTask<Void?, Int?, Void?>() {
     companion object {
@@ -47,7 +49,7 @@ class CounterTask(
     }
 
     private fun sendDigit(number: Int) {
-        objectWriter?.appendMessage(number.toString())
+        objectWriter.appendMessage(number.toString())
     }
 
     private fun sleepThread(millis: Long) {
@@ -59,8 +61,8 @@ class CounterTask(
     }
 
     private fun sendBroadcastButton() {
-        val intent = Intent(MainActivity.BROADCAST_ACTION_BTN_ENABLE)
-        intent.putExtra(MainActivity.EXTRA_RESULT_BUTTON, true)
+        val intent = Intent(BROADCAST_ACTION_BTN_ENABLE)
+        intent.putExtra(EXTRA_RESULT_BUTTON, true)
         LocalBroadcastManager.getInstance(App.getInstanceApp()).sendBroadcast(intent)
     }
 }

@@ -10,9 +10,18 @@ class App : Application() {
 
     companion object {
         private lateinit var self: App
+        private var subscribe: Boolean = false
 
         fun getInstanceApp(): App {
             return self
+        }
+
+        fun setSubscribe(isSubscribe: Boolean) {
+            subscribe = isSubscribe
+        }
+
+        fun getSubscribe(): Boolean {
+            return subscribe
         }
     }
 }

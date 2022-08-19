@@ -1,0 +1,10 @@
+package com.example.asynctaskexample
+
+const val TAG_TASK_FRAGMENT = "tagForHelperFragment"
+const val EXTRA_RESULT_TEXT = "EXTRA_RESULT_TEXT"
+const val BROADCAST_ACTION_SEND_TEXT = "WriteMessageTask.BROADCAST_ACTION_SEND_TEXT"
+
+const val EXTRA_RESULT_BUTTON = "EXTRA_RESULT_BUTTON"
+const val BROADCAST_ACTION_BTN_ENABLE = "CounterTask.BROADCAST_ACTION_SET_BUTTON_ENABLE"
+
+const val TEXTVIEW_STATE_KEY = "TEXTVIEW_STATE_KEY"

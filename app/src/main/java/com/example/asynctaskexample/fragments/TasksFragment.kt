@@ -3,9 +3,6 @@ package com.example.asynctaskexample.fragments
 import android.os.AsyncTask
 import android.os.Bundle
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import com.example.asynctaskexample.interfaces.CancelAllTasks
 import com.example.asynctaskexample.tasks.CounterTask
 import com.example.asynctaskexample.tasks.FindSimpleDigitTask
@@ -14,9 +11,7 @@ import com.example.asynctaskexample.tasks.WriteMessageTask
 class TasksFragment : Fragment(),
     CancelAllTasks {
 
-    private var asyncTaskWriter: WriteMessageTask? = null
-    private var asyncTaskCounter: CounterTask? = null
-    private var asyncTaskSimpleDigit: FindSimpleDigitTask? = null
+    private var tasks: List<AsyncTask<*, *, *>>? = null
 
     private var tasksIsStarted: Boolean = false
 
@@ -25,48 +20,46 @@ class TasksFragment : Fragment(),
         retainInstance = true
     }
 
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return null
+    override fun onDestroy() {
+        super.onDestroy()
+        cancel()
     }
 
     override fun cancel() {
-        tasksIsStarted = false
+        if (tasksIsStarted) {
+            tasksIsStarted = false
 
-        asyncTaskWriter?.cancel(false)
-        asyncTaskCounter?.cancel(false)
-        asyncTaskSimpleDigit?.cancel(false)
-    }
-
-    private fun startAsyncTask(
-        taskInt: AsyncTask<Void?, Int?, Void?>?,
-        taskString: AsyncTask<Void?, String?, Void?>?
-    ) {
-        if (taskInt != null) {
-            taskInt.executeOnExecutor(
-                AsyncTask.THREAD_POOL_EXECUTOR
-            )
-        } else {
-            taskString?.executeOnExecutor(
-                AsyncTask.THREAD_POOL_EXECUTOR
-            )
+            tasks?.forEach { task ->
+                task.cancel(false)
+            }
         }
     }
 
+    private fun startAsyncTask(
+        task: AsyncTask<Void?, *, Void?>
+    ) {
+        task.executeOnExecutor(
+            AsyncTask.THREAD_POOL_EXECUTOR
+        )
+    }
+
     fun startAllAsyncTasks() {
-        tasksIsStarted = true
+        if (!tasksIsStarted) {
 
-        asyncTaskWriter = WriteMessageTask()
-        startAsyncTask(null, asyncTaskWriter)
+            tasksIsStarted = true
 
-        asyncTaskCounter = CounterTask(asyncTaskWriter, this)
-        startAsyncTask(asyncTaskCounter, null)
+            val asyncTaskWriter = WriteMessageTask()
+            val asyncTaskCounter = CounterTask(asyncTaskWriter, this)
+            val asyncTaskSimpleDigits = FindSimpleDigitTask(asyncTaskWriter)
 
-        asyncTaskSimpleDigit = FindSimpleDigitTask(asyncTaskWriter)
-        startAsyncTask(asyncTaskSimpleDigit, null)
+            val tasks = listOf(asyncTaskWriter, asyncTaskCounter, asyncTaskSimpleDigits)
+
+            tasks.forEach { task ->
+                startAsyncTask(task)
+            }
+
+            this.tasks = tasks
+        }
     }
 
     fun getIsStarted(): Boolean {

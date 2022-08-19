@@ -6,39 +6,30 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.example.asynctaskexample.R
+import com.example.asynctaskexample.*
 import com.example.asynctaskexample.databinding.ActivityMainBinding
 import com.example.asynctaskexample.fragments.TasksFragment
 import com.example.asynctaskexample.models.App.Companion.getInstanceApp
+import com.example.asynctaskexample.models.App.Companion.setSubscribe
 
 class MainActivity : AppCompatActivity() {
-    companion object {
-        const val TAG_TASK_FRAGMENT = "tagForHelperFragment"
-        const val EXTRA_RESULT_TEXT = "EXTRA_RESULT_TEXT"
-        const val BROADCAST_ACTION_SEND_TEXT = "WriteMessageTask.BROADCAST_ACTION_SEND_TEXT"
-
-        const val EXTRA_RESULT_BUTTON = "EXTRA_RESULT_BUTTON"
-        const val BROADCAST_ACTION_BTN_ENABLE = "CounterTask.BROADCAST_ACTION_SET_BUTTON_ENABLE"
-
-        const val TEXTVIEW_STATE_KEY = "TEXTVIEW_STATE_KEY"
-    }
-
     private var bindingMain: ActivityMainBinding? = null
     private var taskFragment: TasksFragment? = null
 
-    private var messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+    private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent) {
             val message = intent.getStringExtra(EXTRA_RESULT_TEXT)
             onNewMessageReceive(message)
         }
     }
 
-    private var buttonReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+    private val buttonReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent) {
             val tasksInProgress = intent.getBooleanExtra(EXTRA_RESULT_BUTTON, false)
-            checkButtonReceive(tasksInProgress)
+            updateButtonState(tasksInProgress)
         }
     }
 
@@ -48,7 +39,7 @@ class MainActivity : AppCompatActivity() {
         bindingMain = ActivityMainBinding.inflate(layoutInflater)
         setContentView(bindingMain?.root)
 
-        recoveryTextRotated(savedInstanceState)
+        restoreSavedText(savedInstanceState)
 
         checkFragmentExist()
 
@@ -56,35 +47,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putString(TEXTVIEW_STATE_KEY, bindingMain?.container?.text.toString())
+        val currentTextValue = bindingMain?.container?.text
+
+        if (!currentTextValue.isNullOrEmpty()) {
+            outState.putString(TEXTVIEW_STATE_KEY, currentTextValue.toString())
+        }
+
         super.onSaveInstanceState(outState)
     }
 
     override fun onResume() {
         super.onResume()
-        messageReceiver.let { messageReceiver ->
-            LocalBroadcastManager.getInstance(getInstanceApp()).registerReceiver(
-                messageReceiver,
-                IntentFilter(BROADCAST_ACTION_SEND_TEXT)
-            )
-        }
+        setSubscribe(true)
 
-        buttonReceiver.let { buttonReceiver ->
-            LocalBroadcastManager.getInstance(getInstanceApp()).registerReceiver(
-                buttonReceiver,
-                IntentFilter(BROADCAST_ACTION_BTN_ENABLE)
-            )
-        }
+        LocalBroadcastManager.getInstance(getInstanceApp()).registerReceiver(
+            messageReceiver,
+            IntentFilter(BROADCAST_ACTION_SEND_TEXT)
+        )
+
+        LocalBroadcastManager.getInstance(getInstanceApp()).registerReceiver(
+            buttonReceiver,
+            IntentFilter(BROADCAST_ACTION_BTN_ENABLE)
+        )
     }
 
     override fun onPause() {
-        messageReceiver.let { messageReceiver ->
-            LocalBroadcastManager.getInstance(getInstanceApp()).unregisterReceiver(messageReceiver)
-        }
-        buttonReceiver.let { buttonReceiver ->
-            LocalBroadcastManager.getInstance(getInstanceApp()).unregisterReceiver(buttonReceiver)
-        }
         super.onPause()
+        setSubscribe(false)
+        LocalBroadcastManager.getInstance(getInstanceApp()).unregisterReceiver(messageReceiver)
+        LocalBroadcastManager.getInstance(getInstanceApp()).unregisterReceiver(buttonReceiver)
     }
 
     override fun onDestroy() {
@@ -92,12 +83,11 @@ class MainActivity : AppCompatActivity() {
         bindingMain = null
     }
 
-    private fun recoveryTextRotated(savedInstanceState: Bundle?) {
-        var previousText = ""
+    private fun restoreSavedText(savedInstanceState: Bundle?) {
         if (savedInstanceState != null && savedInstanceState.containsKey(TEXTVIEW_STATE_KEY)) {
-            previousText = savedInstanceState.getString(TEXTVIEW_STATE_KEY).toString()
+            val previousText = savedInstanceState.getString(TEXTVIEW_STATE_KEY)
+            bindingMain?.container?.text = previousText
         }
-        bindingMain?.container?.text = previousText
     }
 
     private fun onNewMessageReceive(message: String?) {
@@ -106,37 +96,36 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkButtonReceive(tasksInProgress: Boolean) {
+    private fun updateButtonState(tasksInProgress: Boolean) {
         if (tasksInProgress) {
             setButtonEnable()
         }
     }
 
     private fun getText(currentValue: String): String {
-        val finalText = StringBuilder()
-
-        finalText.apply {
+        return buildString {
             append(bindingMain?.container?.text)
             append(currentValue)
         }
-
-        return finalText.toString()
     }
 
     private fun checkFragmentExist() {
-        taskFragment =
+        val fragment: TasksFragment =
             supportFragmentManager.findFragmentByTag(TAG_TASK_FRAGMENT) as TasksFragment?
+                ?: run {
+                    val taskFragment = TasksFragment()
 
-        if (taskFragment == null) {
-            taskFragment = TasksFragment()
+                    supportFragmentManager
+                        .beginTransaction()
+                        .add(taskFragment, TAG_TASK_FRAGMENT)
+                        .commit()
 
-            supportFragmentManager
-                .beginTransaction()
-                .add(taskFragment!!, TAG_TASK_FRAGMENT)
-                .commit()
-        }
+                    taskFragment
+                }
 
-        if (taskFragment?.getIsStarted() == true) {
+        taskFragment = fragment
+
+        if (fragment.getIsStarted()) {
             setBtnStartDisable()
         }
     }
@@ -151,7 +140,7 @@ class MainActivity : AppCompatActivity() {
     private fun setButtonEnable() {
         bindingMain?.buttonStart?.apply {
             isEnabled = true
-            setTextColor(ContextCompat.getColor(context, R.color.white))
+            setTextColor(AppCompatResources.getColorStateList(context, R.color.white))
             setBackgroundColor(ContextCompat.getColor(context, R.color.teal_200))
         }
     }
@@ -159,7 +148,7 @@ class MainActivity : AppCompatActivity() {
     private fun setBtnStartDisable() {
         bindingMain?.buttonStart?.apply {
             isEnabled = false
-            setTextColor(ContextCompat.getColor(context, R.color.grey))
+            setTextColor(AppCompatResources.getColorStateList(context, R.color.grey))
             setBackgroundColor(ContextCompat.getColor(context, R.color.teal_700))
         }
     }

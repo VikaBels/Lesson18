@@ -3,7 +3,7 @@ package com.example.asynctaskexample.tasks
 import android.os.AsyncTask
 
 class FindSimpleDigitTask(
-    private val objectWriter: WriteMessageTask?,
+    private val objectWriter: WriteMessageTask,
 ) : AsyncTask<Void?, Int?, Void?>() {
     companion object {
         const val MIN_NUMBER = 1
@@ -45,12 +45,12 @@ class FindSimpleDigitTask(
     }
 
     private fun sendSimpleDigit(number: Int) {
-        objectWriter?.appendMessage(number.toString())
+        objectWriter.appendMessage(number.toString())
     }
 
     private fun wakeUpMessageThread() {
-        val asyncTaskGetString = objectWriter?.let { SendCustomMessageTask(it) }
-        asyncTaskGetString?.executeOnExecutor(
+        val asyncTaskGetString = SendCustomMessageTask(objectWriter)
+        asyncTaskGetString.executeOnExecutor(
             AsyncTask.THREAD_POOL_EXECUTOR
         )
     }

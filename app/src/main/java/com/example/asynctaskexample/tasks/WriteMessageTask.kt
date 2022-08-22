@@ -11,7 +11,6 @@ import com.example.asynctaskexample.models.App.Companion.getSubscribe
 class WriteMessageTask : AsyncTask<Void?, String?, Void?>() {
 
     private val listMessage = mutableListOf<String>()
-    private val valuesBuffer = mutableListOf<String>()
 
     private var previouslySigned = true
 
@@ -40,7 +39,7 @@ class WriteMessageTask : AsyncTask<Void?, String?, Void?>() {
         if (getSubscribe()) {
 
             if (!previouslySigned) {
-                sendBroadcast(valuesBuffer.joinWithSeparator())
+                sendBroadcast(listMessage.joinWithSeparator())
                 clearBuffer()
 
                 previouslySigned = true
@@ -54,12 +53,12 @@ class WriteMessageTask : AsyncTask<Void?, String?, Void?>() {
     }
 
     private fun clearBuffer() {
-        valuesBuffer.clear()
+        listMessage.clear()
     }
 
     private fun addValueInBuffer(value: String) {
         if (value.isNotEmpty()) {
-            valuesBuffer.add(value)
+            listMessage.add(value)
         }
     }
 

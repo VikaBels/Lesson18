@@ -16,11 +16,7 @@ class WriteMessageTask : AsyncTask<Void?, String?, Void?>() {
 
     override fun onProgressUpdate(vararg values: String?) {
         super.onProgressUpdate(*values)
-        sendMessage(
-            values.joinToString(
-                separator = " "
-            )
-        )
+        sendBroadcast(values.joinToString())
     }
 
     override fun doInBackground(vararg p0: Void?): Void? {
@@ -33,23 +29,6 @@ class WriteMessageTask : AsyncTask<Void?, String?, Void?>() {
             e.printStackTrace()
         }
         return null
-    }
-
-    private fun sendMessage(value: String) {
-        if (getSubscribe()) {
-
-            if (!previouslySigned) {
-                sendBroadcast(listMessage.joinWithSeparator())
-                clearBuffer()
-
-                previouslySigned = true
-            }
-            sendBroadcast(value)
-
-        } else {
-            addValueInBuffer(value)
-            previouslySigned = false
-        }
     }
 
     private fun clearBuffer() {
@@ -77,7 +56,24 @@ class WriteMessageTask : AsyncTask<Void?, String?, Void?>() {
             listMessage.clear()
         }
 
-        publishProgress(stringListMessage)
+        sendMessage(stringListMessage)
+    }
+
+    private fun sendMessage(stringListMessage: String) {
+        if (getSubscribe()) {
+
+            if (!previouslySigned) {
+                publishProgress(listMessage.joinWithSeparator())
+                clearBuffer()
+
+                previouslySigned = true
+            }
+            publishProgress(stringListMessage)
+
+        } else {
+            addValueInBuffer(stringListMessage)
+            previouslySigned = false
+        }
     }
 
     private fun List<String>.joinWithSeparator(): String {

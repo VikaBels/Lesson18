@@ -6,13 +6,11 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.asynctaskexample.BROADCAST_ACTION_SEND_TEXT
 import com.example.asynctaskexample.EXTRA_RESULT_TEXT
 import com.example.asynctaskexample.models.App.Companion.getInstanceApp
-import com.example.asynctaskexample.models.App.Companion.getSubscribe
+import com.example.asynctaskexample.models.App.Companion.isSubscribe
 
 class WriteMessageTask : AsyncTask<Void?, String?, Void?>() {
 
     private val listMessage = mutableListOf<String>()
-
-    private var previouslySigned = true
 
     override fun onProgressUpdate(vararg values: String?) {
         super.onProgressUpdate(*values)
@@ -31,16 +29,6 @@ class WriteMessageTask : AsyncTask<Void?, String?, Void?>() {
         return null
     }
 
-    private fun clearBuffer() {
-        listMessage.clear()
-    }
-
-    private fun addValueInBuffer(value: String) {
-        if (value.isNotEmpty()) {
-            listMessage.add(value)
-        }
-    }
-
     private fun sendBroadcast(value: String) {
         val intent = Intent(BROADCAST_ACTION_SEND_TEXT)
         intent.putExtra(EXTRA_RESULT_TEXT, value)
@@ -48,31 +36,18 @@ class WriteMessageTask : AsyncTask<Void?, String?, Void?>() {
     }
 
     private fun writeMessage() {
-        val stringListMessage: String
+        var stringListMessage: String? = null
 
         synchronized(this) {
-            stringListMessage = listMessage.joinWithSeparator()
+            if (isSubscribe()) {
+                stringListMessage = listMessage.joinWithSeparator()
 
-            listMessage.clear()
+                listMessage.clear()
+            }
         }
 
-        sendMessage(stringListMessage)
-    }
-
-    private fun sendMessage(stringListMessage: String) {
-        if (getSubscribe()) {
-
-            if (!previouslySigned) {
-                publishProgress(listMessage.joinWithSeparator())
-                clearBuffer()
-
-                previouslySigned = true
-            }
-            publishProgress(stringListMessage)
-
-        } else {
-            addValueInBuffer(stringListMessage)
-            previouslySigned = false
+        stringListMessage?.let {
+            publishProgress(it)
         }
     }
 

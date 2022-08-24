@@ -20,7 +20,7 @@ class App : Application() {
             subscribe = isSubscribe
         }
 
-        fun getSubscribe(): Boolean {
+        fun isSubscribe(): Boolean {
             return subscribe
         }
     }
